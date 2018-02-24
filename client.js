@@ -38,11 +38,6 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-fs.watch('./', (eventType, filename) => {
-  if (eventType == 'change' && filename == 'data.json') {
-    console.log(`event type is: ${eventType}`);
-    console.log(`filename provided: ${filename}`);
-
-    socket.emit('newData', JSON.parse(fs.readFileSync(filename, 'utf8')));
-  }
+fs.watchFile('data.json', (eventType, filename) => {
+  socket.emit('newData', JSON.parse(fs.readFileSync(filename, 'utf8')));
 });
