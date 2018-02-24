@@ -1,0 +1,23 @@
+{
+  "name": "sensors",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PLA25/Sensors.git"
+  },
+  "author": "Martijn Vegter",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/PLA25/Sensors/issues"
+  },
+  "homepage": "https://github.com/PLA25/Sensors#readme",
+  "dependencies": {
+    "socket.io": "2.0.4",
+    "socket.io-client": "2.0.4"
+  }
+}
