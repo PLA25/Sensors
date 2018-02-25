@@ -154,7 +154,10 @@ app.get('/:lat/:long', (req, res) => {
       return a.Distance - b.Distance;
     }).slice(0, 3);
 
-    const divider = (1 / parseFloat(selectedNodes[0].Distance, 10)) + (1 / parseFloat(selectedNodes[1].Distance, 10)) + (1 / parseFloat(selectedNodes[2].Distance, 10));
+    var divider = 0;
+    for (var i = 0; i < selectedNodes.length; i++) {
+      divider += (1 / parseFloat(selectedNodes[i].Distance, 10));
+    }
 
     var calculatedValue = 0;
 
@@ -178,8 +181,8 @@ app.get('/:lat/:long', (req, res) => {
         }
 
         res.send({
-          temperature: calculatedValue,
-          nodes: selectedNodes
+          Value: calculatedValue,
+          UsedHubs: selectedNodes
         });
       })
       .catch((err) => {
