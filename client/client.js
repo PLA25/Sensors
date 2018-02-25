@@ -25,16 +25,17 @@ socket.on('connect', () => {
 });
 
 const exec = require('child_process').exec;
-function execute(command, callback){
-    exec(command, function(error, stdout, stderr){ 
-      callback(stdout); 
-    });
+
+function execute(command, callback) {
+  exec(command, function(error, stdout, stderr) {
+    callback(stdout);
+  });
 };
 
 socket.on('identify', (cb) => {
   // TODO: Get Long Lat
-  
-  execute("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2", function(id){
+
+  execute("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2", function(id) {
     cb(id, 10, 2);
   });
 });
@@ -43,10 +44,6 @@ socket.on('disconnect', () => {
   console.log("Disconnected");
 });
 
-function getRandomInt(max) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
-
-fs.watchFile('data.json', (eventType, filename) => {
-  socket.emit('newData', JSON.parse(fs.readFileSync(filename, 'utf8')));
+fs.watchFile('data.json', (curr, prev) => {
+  socket.emit('newData', JSON.parse(fs.readFileSync('data.json', 'utf8')));
 });
