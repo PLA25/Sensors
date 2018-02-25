@@ -35,7 +35,10 @@ io.on('connect', (socket) => {
   });
 
   socket.on('newData', (data) => {
-    console.log(data);
+    for (var i = 0; i < data.length; i++) {
+      var nodeData = data[i];
+      console.log(nodeData);
+    }
   });
 
   socket.on('disconnect', (reason) => {
