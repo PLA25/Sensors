@@ -26,10 +26,10 @@ io.on('connect', (socket) => {
     socket.SerialID = serial;
 
     var node = serial + " | " + long + ", " + lat;
-        node = {
-          ID: serial,
-          Content: node
-        };
+    node = {
+      ID: serial,
+      Content: node
+    };
 
     io.emit('newNode', node);
   });
@@ -62,22 +62,43 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 });
 
-app.get('/:city', (req, res) => {
-  var lat = 0;
-  var long = 0;
+const City = require('./models/city');
 
-  GeoCoder.geocode(req.params.city)
-    .then((data) => {
-      lat = data[0].latitude;
-      long = data[0].longitude;
-    })
-    .then(() => {
-      res.redirect('/' + lat + '/' + long);
-    })
-    .catch((err) => {
-      console.log(err);
+app.get('/:city', (req, res) => {
+  const cityName = req.params.city;
+
+  City.findOne({
+    'Name': cityName
+  }, (err, city) => {
+    if (err) {
       res.send(err);
-    });
+      return;
+    }
+
+    if (city) {
+      res.redirect('/' + city.Latitude + '/' + city.Longitude);
+      return;
+    }
+
+    /* Create new City */
+    if (!city) {
+      city = new City();
+      city.Name = cityName;
+
+      GeoCoder.geocode(city.Name)
+        .then((data) => {
+          city.Latitude = data[0].latitude;
+          city.Longitude = data[0].longitude;
+          city.save();
+        })
+        .then(() => {
+          res.redirect('/' + city.Latitude + '/' + city.Longitude);
+        })
+        .catch((err) => {
+          res.send(err);
+        });
+    }
+  });
 });
 
 app.get('/:lat/:long', (req, res) => {
@@ -112,24 +133,21 @@ app.get('/:lat/:long', (req, res) => {
   ];
 
   const data = {};
-  data[1] = [
-    {
+  data[1] = [{
       temp: 2
     },
     {
       temp: 1
     }
   ];
-  data[2] = [
-    {
+  data[2] = [{
       temp: -2
     },
     {
       temp: -3
     }
   ];
-  data[3] = [
-    {
+  data[3] = [{
       temp: -6
     },
     {

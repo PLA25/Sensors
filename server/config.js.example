@@ -1,5 +1,12 @@
 'use strict';
 
 module.exports = {
-  GoogleKey: ''
+  GoogleKey: '',
+  MongoDB: {
+    Host: '',
+    Port: ,
+    User: '',
+    Pass: '',
+    Name: ''
+  }
 };
