@@ -47,9 +47,9 @@ io.on('connect', (socket) => {
     });
   });
 
-  socket.on('newData', (data) => {
-    for (var i = 0; i < data.length; i++) {
-      var nodeData = data[i];
+  socket.on('newData', (rawData) => {
+    for (var i = 0; i < rawData.length; i++) {
+      var nodeData = rawData[i];
 
       var data = new Data();
       data.SensorHub = socket.SerialID;
@@ -123,7 +123,7 @@ app.get('/:city', (req, res) => {
   });
 });
 
-app.get('/:lat/:long', (req, res) => {
+app.get('/:lat/:long/:type', (req, res) => {
   SensorHub.find({}, (err, sensorHubs) => {
     if (err) {
       return res.send(err);
@@ -164,7 +164,7 @@ app.get('/:lat/:long', (req, res) => {
     var promises = [];
     for (var i = 0; i < selectedNodes.length; i++) {
       promises.push(GetData({
-        'Type': 'temperature',
+        'Type': req.params.type,
         'SensorHub': selectedNodes[i].SerialID
       }));
     }
