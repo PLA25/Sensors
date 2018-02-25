@@ -19,30 +19,49 @@
 /* Sensor Connection */
 const io = require('socket.io')(3000);
 
+/* Models */
+const Data = require('./models/data');
+const SensorHub = require('./models/sensorhub');
+
 io.on('connect', (socket) => {
-  console.log("New Connection");
+  socket.emit('identify', (SerialID, latitude, longitude) => {
+    console.log(`SensorHub connected ${SerialID} on Lat: ${latitude} and Long: ${longitude}`);
 
-  socket.emit('identify', (serial, long, lat) => {
-    socket.SerialID = serial;
+    socket.SerialID = SerialID;
 
-    var node = serial + " | " + long + ", " + lat;
-    node = {
-      ID: serial,
-      Content: node
-    };
+    SensorHub.findOne({
+      'SerialID': SerialID
+    }, (err, sensorHub) => {
+      if (err) {
+        return;
+      }
 
-    io.emit('newNode', node);
+      /* Create new SensorHub */
+      if (!sensorHub) {
+        sensorHub = new SensorHub();
+        sensorHub.SerialID = SerialID;
+        sensorHub.Latitude = latitude;
+        sensorHub.Longitude = longitude;
+        sensorHub.save();
+      }
+    });
   });
 
   socket.on('newData', (data) => {
     for (var i = 0; i < data.length; i++) {
       var nodeData = data[i];
-      console.log(nodeData);
+
+      var data = new Data();
+      data.SensorHub = socket.SerialID;
+      data.Type = nodeData.type;
+      data.Timestamp = nodeData.timestamp;
+      data.Value = nodeData.value;
+      data.save();
     }
   });
 
   socket.on('disconnect', (reason) => {
-    io.emit('remNode', socket.SerialID);
+    // TODO: Something??
   });
 });
 
@@ -105,98 +124,80 @@ app.get('/:city', (req, res) => {
 });
 
 app.get('/:lat/:long', (req, res) => {
-  const nodes = [
-    // Paris
-    {
-      id: 1,
-      lat: 48.856614,
-      lon: 2.352222
-    },
-
-    // Berlin
-    {
-      id: 2,
-      lat: 52.520007,
-      lon: 13.404954
-    },
-
-    // Wenen
-    {
-      id: 3,
-      lat: 48.208174,
-      lon: 16.373819
-    },
-
-    // New York
-    {
-      id: 4,
-      lat: 40.712775,
-      lon: -74.005973
-    }
-  ];
-
-  const data = {};
-  data[1] = [{
-      temp: 2
-    },
-    {
-      temp: 1
-    }
-  ];
-  data[2] = [{
-      temp: -2
-    },
-    {
-      temp: -3
-    }
-  ];
-  data[3] = [{
-      temp: -6
-    },
-    {
-      temp: -4
-    }
-  ];
-
-  const closestNodes = [];
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
-
-    const from = {
-      lat: node.lat,
-      lon: node.lon
-    };
-
-    const to = {
-      lat: parseFloat(req.params.lat, 10),
-      lon: parseFloat(req.params.long, 10)
+  SensorHub.find({}, (err, sensorHubs) => {
+    if (err) {
+      return res.send(err);
     }
 
-    const dist = Distance(from, to);
+    const latitude = parseFloat(req.params.lat);
+    const longitude = parseFloat(req.params.long);
 
-    node.dist = dist;
-    closestNodes.push(node);
-  }
+    const calculatedHubs = [];
+    for (var i = 0; i < sensorHubs.length; i++) {
+      const sensorHub = sensorHubs[i];
 
-  const selectedNodes = closestNodes.sort((a, b) => {
-    return a.dist - b.dist;
-  }).slice(0, 3);
+      const from = {
+        lat: parseFloat(sensorHub.Latitude, 10),
+        lon: parseFloat(sensorHub.Longitude, 10)
+      };
 
-  const divider = (1 / selectedNodes[0].dist) + (1 / selectedNodes[1].dist) + (1 / selectedNodes[2].dist);
+      const to = {
+        lat: parseFloat(latitude, 10),
+        lon: parseFloat(longitude, 10)
+      }
 
-  var calculatedValue = 0;
-  for (var i = 0; i < selectedNodes.length; i++) {
-    var node = selectedNodes[i];
+      sensorHub.Distance = Distance(from, to);
+      calculatedHubs.push(sensorHub);
+    }
 
-    var weight = (1 / node.dist) / divider;
-    var value = data[node.id][0].temp * weight;
+    const selectedNodes = calculatedHubs.sort((a, b) => {
+      return a.Distance - b.Distance;
+    }).slice(0, 3);
 
-    calculatedValue += value;
-  }
+    const divider = (1 / parseFloat(selectedNodes[0].Distance, 10)) + (1 / parseFloat(selectedNodes[1].Distance, 10)) + (1 / parseFloat(selectedNodes[2].Distance, 10));
 
-  res.send({
-    temp: calculatedValue
+    var calculatedValue = 0;
+
+    var promises = [];
+    for (var i = 0; i < selectedNodes.length; i++) {
+      promises.push(GetData({
+        'Type': 'temperature',
+        'SensorHub': selectedNodes[i].SerialID
+      }));
+    }
+
+    Promise.all(promises)
+      .then((data) => {
+        var calculatedValue = 0;
+        for (var i = 0; i < data.length; i++) {
+          const dataNode = data[i];
+          const sensorHub = selectedNodes[i];
+
+          const weight = (1 / sensorHub.Distance) / divider;
+          calculatedValue += (parseFloat(dataNode["Value"], 10) * weight);
+        }
+
+        res.send({
+          temperature: calculatedValue,
+          nodes: selectedNodes
+        });
+      })
+      .catch((err) => {
+        return res.send(err);
+      });
   });
 });
+
+function GetData(options) {
+  return new Promise(function(resolve, reject) {
+    Data.findOne(options, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      resolve(data);
+    });
+  });
+}
 
 app.listen(80, () => console.log('API listening on port 80!'))

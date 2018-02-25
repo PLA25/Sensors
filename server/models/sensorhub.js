@@ -5,23 +5,19 @@ const DB = mongoose.connect(`mongodb://${Config.MongoDB.User}:${Config.MongoDB.P
 
 var Schema = mongoose.Schema;
 
-const dataScheme = new Schema({
-  SensorHub: {
+const sensorHubScheme = new Schema({
+  SerialID: {
     type: String,
     required: true
   },
-  Type: {
+  Latitude: {
     type: String,
     required: true
   },
-  Timestamp: {
-    type: Date,
-    required: true
-  },
-  Value: {
+  Longitude: {
     type: String,
     required: true
   }
 });
 
-module.exports = mongoose.model('Data', dataScheme);
+module.exports = mongoose.model('SensorHub', sensorHubScheme);

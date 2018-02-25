@@ -16,8 +16,10 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const fs = require('fs');
+const LATIUDE = null;
+const LONGITUDE = null;
 
+const fs = require('fs');
 const socket = require('socket.io-client')('http://127.0.0.1:3000');
 
 socket.on('connect', () => {
@@ -34,9 +36,12 @@ function execute(command, callback) {
 
 socket.on('identify', (cb) => {
   // TODO: Get Long Lat
+  if (LATIUDE == null || LONGITUDE == null) {
+    throw new Error("Fill Lat, Long");
+  }
 
-  execute("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2", function(id) {
-    cb(id, 10, 2);
+  execute("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2", (SerialID) => {
+    cb(SerialID, LATIUDE, LONGITUDE);
   });
 });
 
@@ -45,5 +50,11 @@ socket.on('disconnect', () => {
 });
 
 fs.watchFile('data.json', (curr, prev) => {
-  socket.emit('newData', JSON.parse(fs.readFileSync('data.json', 'utf8')));
+  var data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+
+  for (var i = 0; i < data.length; i++) {
+    data[i]["timestamp"] = Date.now();
+  }
+
+  socket.emit('newData', data);
 });
