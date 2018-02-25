@@ -44,8 +44,7 @@ io.on('connect', (socket) => {
 });
 
 /* API Connection */
-
-/* Express */
+const Config = require('./config');
 const express = require('express')
 const app = express()
 
@@ -55,7 +54,7 @@ const GeoCoder = require('node-geocoder')({
   provider: 'google',
   /* Provider Specific */
   httpAdapter: 'https',
-  apiKey: process.env.KEY,
+  apiKey: Config.GoogleKey,
   formatter: null
 });
 
@@ -77,6 +76,7 @@ app.get('/:city', (req, res) => {
     })
     .catch((err) => {
       console.log(err);
+      res.send(err);
     });
 });
 
@@ -178,4 +178,4 @@ app.get('/:lat/:long', (req, res) => {
   });
 });
 
-app.listen(80, () => console.log('Example app listening on port 3000!'))
+app.listen(80, () => console.log('API listening on port 80!'))
