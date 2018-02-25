@@ -24,10 +24,19 @@ socket.on('connect', () => {
   console.log("Connected");
 });
 
+const exec = require('child_process').exec;
+function execute(command, callback){
+    exec(command, function(error, stdout, stderr){ 
+      callback(stdout); 
+    });
+};
+
 socket.on('identify', (cb) => {
-  // TODO: Get serial from RPI (cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2)
   // TODO: Get Long Lat
-  cb("00000000f40d68ca-" + getRandomInt(10), 10, 2);
+  
+  execute("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2", function(id){
+    cb(id, 10, 2);
+  });
 });
 
 socket.on('disconnect', () => {
