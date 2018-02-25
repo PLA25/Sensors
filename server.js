@@ -44,14 +44,42 @@ io.on('connect', (socket) => {
 });
 
 /* API Connection */
+
+/* Express */
 const express = require('express')
 const app = express()
+
+/* Utilities */
+const Distance = require('fast-haversine');
+const GeoCoder = require('node-geocoder')({
+  provider: 'google',
+  /* Provider Specific */
+  httpAdapter: 'https',
+  apiKey: process.env.KEY,
+  formatter: null
+});
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 });
 
-const distance = require('fast-haversine');
+app.get('/:city', (req, res) => {
+  var lat = 0;
+  var long = 0;
+
+  GeoCoder.geocode(req.params.city)
+    .then((data) => {
+      lat = data[0].latitude;
+      long = data[0].longitude;
+    })
+    .then(() => {
+      res.redirect('/' + lat + '/' + long);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
 app.get('/:lat/:long', (req, res) => {
   const nodes = [
     // Paris
@@ -123,7 +151,7 @@ app.get('/:lat/:long', (req, res) => {
       lon: parseFloat(req.params.long, 10)
     }
 
-    const dist = distance(from, to);
+    const dist = Distance(from, to);
 
     node.dist = dist;
     closestNodes.push(node);
@@ -148,6 +176,6 @@ app.get('/:lat/:long', (req, res) => {
   res.send({
     temp: calculatedValue
   });
-})
+});
 
 app.listen(80, () => console.log('Example app listening on port 3000!'))
