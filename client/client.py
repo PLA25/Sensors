@@ -58,7 +58,7 @@ while True:
     print("Smoke    : {} ppm ({})".format(round(perc["SMOKE"], 10), perc["SMOKE"]))
     
     # Temp/Hum Sensor
-    humidity, temperature = Adafruit_DHT.read_retry(11, 4)
+    humidity, temperature = Adafruit_DHT.read_retry(11, 5)
     print("Tempe    : {} C".format(temperature))
     print("Humidity : {} %".format(humidity))
     
