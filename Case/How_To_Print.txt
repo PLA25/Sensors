@@ -1,0 +1,5 @@
+These files where designed to be printed with the Wanhao Duplicator i3Plus and clones.
+
+They can be used on any 3D printer that has an Nozzle Diameter: 0.4mm and a printbed of 20x20cm.
+We used PLA for the print, but other materials should be fine too.
+
