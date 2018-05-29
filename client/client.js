@@ -29,7 +29,7 @@ socket.on('connect', () => {
 const exec = require('child_process').exec;
 
 function execute(command, callback) {
-  exec(command, function(error, stdout, stderr) {
+  exec(command, function (error, stdout, stderr) {
     callback(stdout);
   });
 };
@@ -49,12 +49,51 @@ socket.on('disconnect', () => {
   console.log("Disconnected");
 });
 
+const {
+  spawn,
+} = require('child_process');
+
 fs.watchFile('data.json', (curr, prev) => {
   var data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
+
+
   for (var i = 0; i < data.length; i++) {
     data[i]["timestamp"] = Date.now();
-  }
+    const date = new Date(data[i]["timestamp"]);
 
-  socket.emit('newData', data);
+    let type = 0;
+    if (data.Type === 'temperature') {
+      type = 0;
+    } else if (data.Type === 'gasses') {
+      type = 1;
+    } else {
+      type = 2;
+    }
+
+    const pyData = [
+      date.getDay() - 1,
+      weekNumber(date),
+      date.getUTCHours(),
+      type,
+      parseInt(data[i].value, 10),
+    ];
+
+    const py = spawn('python', ['ml.py']);
+
+    let dataString = '';
+    py.stdout.on('data', (data) => {
+      dataString += data.toString();
+    });
+
+    py.stdout.on('end', () => {
+      const output = JSON.parse(dataString)[0];
+      data.inMargin = output;
+
+      socket.emit('newData', data);
+    });
+
+    py.stdin.write(JSON.stringify(pyData));
+    py.stdin.end();
+  }
 });
