@@ -19,9 +19,7 @@
   "homepage": "https://github.com/PLA25/Sensors#readme",
   "dependencies": {
     "express": "4.16.2",
-    "fast-haversine": "1.0.0",
     "mongoose": "5.0.7",
-    "node-geocoder": "3.22.0",
     "socket.io": "2.0.4"
   }
 }

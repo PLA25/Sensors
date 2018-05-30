@@ -22,14 +22,36 @@ const LONGITUDE = null;
 const fs = require('fs');
 const socket = require('socket.io-client')('http://127.0.0.1:3000');
 
+var Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
+var LED = new Gpio(5, 'out'); //use GPIO pin 4, and specify that it is output
+var blinkInterval = setInterval(blinkLED, 250); //run the blinkLED function every 250ms
+
+function blinkLED() { //function to start blinking
+  if (LED.readSync() === 0) { //check the pin state, if the state is 0 (or off)
+    LED.writeSync(1); //set pin state to 1 (turn LED on)
+  } else {
+    LED.writeSync(0); //set pin state to 0 (turn LED off)
+  }
+}
+
+function startBlink() {
+  setInterval(blinkLED, 250);
+}
+
+function endBlink() { //function to stop blinking
+  clearInterval(blinkInterval); // Stop blink intervals
+  LED.writeSync(0); // Turn LED off
+}
+
 socket.on('connect', () => {
   console.log("Connected");
+  endBlink();
 });
 
 const exec = require('child_process').exec;
 
 function execute(command, callback) {
-  exec(command, function (error, stdout, stderr) {
+  exec(command, function(error, stdout, stderr) {
     callback(stdout);
   });
 };
@@ -47,20 +69,21 @@ socket.on('identify', (cb) => {
 
 socket.on('disconnect', () => {
   console.log("Disconnected");
+  startBlink();
 });
 
 const {
   spawn,
 } = require('child_process');
 
+const weekNumber = require('current-week-number');
+
 fs.watchFile('data.json', (curr, prev) => {
   var data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
-
-
   for (var i = 0; i < data.length; i++) {
-    data[i]["timestamp"] = Date.now();
-    const date = new Date(data[i]["timestamp"]);
+    const date = Date.now();
+    data[i].timestamp = date;
 
     let type = 0;
     if (data.Type === 'temperature') {
@@ -82,15 +105,20 @@ fs.watchFile('data.json', (curr, prev) => {
     const py = spawn('python', ['ml.py']);
 
     let dataString = '';
-    py.stdout.on('data', (data) => {
-      dataString += data.toString();
+    py.stdout.on('data', (rawData) => {
+      dataString += rawData.toString();
     });
 
     py.stdout.on('end', () => {
-      const output = JSON.parse(dataString)[0];
-      data.inMargin = output;
-
-      socket.emit('newData', data);
+      try {
+        const output = JSON.parse(dataString)[0];
+        data[i].inMargin = output;
+      } catch (e) {
+        data[i].inMargin = 0;
+      } finally {
+        console.log(data[i]);
+        socket.emit('newData', data[i]);
+      }
     });
 
     py.stdin.write(JSON.stringify(pyData));
