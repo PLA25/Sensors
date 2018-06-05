@@ -19,16 +19,17 @@
 /* Sensor Connection */
 const io = require('socket.io')(3000);
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const Config = require('./config');
+sgMail.setApiKey(Config.Key);
 
 /* Models */
-const Data = require('./models/data');
-const SensorHub = require('./models/sensorhub');
+//const Data = require('./models/data');
+//const SensorHub = require('./models/sensorhub');
 
 io.on('connect', (socket) => {
   socket.emit('identify', (SerialID, latitude, longitude) => {
     console.log(`SensorHub connected ${SerialID} on Lat: ${latitude} and Long: ${longitude}`);
-
+/*
     socket.SerialID = SerialID;
 
     SensorHub.findOne({
@@ -38,7 +39,7 @@ io.on('connect', (socket) => {
         return;
       }
 
-      /* Create new SensorHub */
+      /* Create new SensorHub *//*
       if (!sensorHub) {
         sensorHub = new SensorHub();
         sensorHub.SerialID = SerialID;
@@ -46,32 +47,38 @@ io.on('connect', (socket) => {
         sensorHub.Longitude = longitude;
         sensorHub.save();
       }
-    });
+    });*/
   });
 
   socket.on('newData', (rawData) => {
-    for (var i = 0; i < rawData.length; i++) {
-      var nodeData = rawData[i];
-
+    //for (var i = 0; i < rawData.length; i++) {
+      var nodeData = rawData;
+      console.log(nodeData);
+/*
       var data = new Data();
       data.SensorHub = socket.SerialID;
       data.Type = nodeData.type;
       data.Timestamp = nodeData.timestamp;
       data.Value = nodeData.value;
-      data.inMargnin = nodeData.inMargin;
-      if(data.inMargin == 0) {
+      data.inMargnin = nodeData.inMargin;*/
+      if(nodeData.inMargin == 0) {
+        console.log('Sending mail');
+        
+        
+        
         const msg = {
-          to: 'mail@mvegter.mem',
+          to: 'mail@mvegter.me',
           from: 'warning@pds.com',
           subject: 'Detection Warning!',
-          text: `Please visit the portal for more information. SensorHub: ${data.SensorHub}, Time: ${data.Timestamp}, Type: ${data.Type} and Value: ${data.Value}`,
-          html: `Please <strong>visit the portal</strong>for more information SensorHub: ${data.SensorHub}, Time: ${data.Timestamp}, Type: ${data.Type} and Value: ${data.Value}`,
+          text: `Please visit the portal for more information. SensorHub: ${nodeData.SerialID}, Time: ${new Date(nodeData.Timestamp).toISOString()}, Type: ${nodeData.Type} and Value: ${nodeData.Value}`,
+          html: `Please <strong>visit the portal</strong>for more information SensorHub: ${nodeData.SerialID}, Time: ${new Date(nodeData.Timestamp).toISOString()}, Type: ${nodeData.Type} and Value: ${nodeData.Value}`,
         };
         sgMail.send(msg);
       }
+      console.log();
       
-      data.save();
-    }
+      //data.save();
+    
   });
 
   socket.on('disconnect', (reason) => {
