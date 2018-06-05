@@ -71,7 +71,7 @@ io.on('connect', (socket) => {
           from: 'warning@pds.com',
           subject: 'Detection Warning!',
           text: `Please visit the portal for more information. SensorHub: ${nodeData.SerialID}, Time: ${new Date(nodeData.Timestamp).toISOString()}, Type: ${nodeData.Type} and Value: ${nodeData.Value}`,
-          html: `Please <strong>visit the portal</strong>for more information SensorHub: ${nodeData.SerialID}, Time: ${new Date(nodeData.Timestamp).toISOString()}, Type: ${nodeData.Type} and Value: ${nodeData.Value}`,
+          html: `Please <strong>visit the portal</strong> for more information SensorHub: ${nodeData.SerialID}, Time: ${new Date(nodeData.Timestamp).toISOString()}, Type: ${nodeData.Type} and Value: ${nodeData.Value}`,
         };
         sgMail.send(msg);
       }
