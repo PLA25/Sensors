@@ -18,6 +18,8 @@
 
 /* Sensor Connection */
 const io = require('socket.io')(3000);
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /* Models */
 const Data = require('./models/data');
@@ -56,6 +58,18 @@ io.on('connect', (socket) => {
       data.Type = nodeData.type;
       data.Timestamp = nodeData.timestamp;
       data.Value = nodeData.value;
+      data.inMargnin = nodeData.inMargin;
+      if(data.inMargin == 0) {
+        const msg = {
+          to: 'mail@mvegter.mem',
+          from: 'warning@pds.com',
+          subject: 'Detection Warning!',
+          text: `Please visit the portal for more information. SensorHub: ${data.SensorHub}, Time: ${data.Timestamp}, Type: ${data.Type} and Value: ${data.Value}`,
+          html: `Please <strong>visit the portal</strong>for more information SensorHub: ${data.SensorHub}, Time: ${data.Timestamp}, Type: ${data.Type} and Value: ${data.Value}`,
+        };
+        sgMail.send(msg);
+      }
+      
       data.save();
     }
   });
